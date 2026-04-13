@@ -1,0 +1,31 @@
+auth {
+  mode: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+script:pre-request {
+  const axios = require("axios");
+  
+  // Only fetch a new token if we don't have one or it's expired
+  if (!bru.getEnvVar("accessToken")) {
+    const authUrl = bru.getEnvVar("authUrl"); 
+    const email = bru.getEnvVar("email");
+    const password = bru.getEnvVar("password")
+    
+    const resp = await axios.post(`${authUrl}?grant_type=password`, {
+      email: email,
+      password: password
+    }, {
+      headers: { 
+        "apikey": "your-anon-key",
+        "Content-Type": "application/json"
+      }
+    });
+  
+    // Save it for this session
+    bru.setEnvVar("accessToken", resp.data.access_token);
+  }
+}

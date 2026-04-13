@@ -1,0 +1,23 @@
+meta {
+  name: insert-product
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{entityUrl}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "name": "New Product for {{email}}",
+    "in_stock": false
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
