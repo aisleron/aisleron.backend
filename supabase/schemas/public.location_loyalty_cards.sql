@@ -14,11 +14,12 @@
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 create table public.location_loyalty_cards (
-  location_id uuid primary key references public.locations (id) on delete cascade,
+  id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   client_updated_at timestamptz not null default now(),
   server_updated_at timestamptz not null default now(),
   is_deleted boolean not null default false,
+  location_id uuid unique not null references public.locations (id) on delete cascade,
   loyalty_card_id uuid not null references public.loyalty_cards on delete cascade
 );
 
