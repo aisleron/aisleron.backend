@@ -24,6 +24,7 @@ Cloud synchronization and database management for the Aisleron Android applicati
 | Status	| npx supabase status	        | Displays local API keys, DB credentials, and URLs. |
 | Generate Migration | npx supabase db diff -f {{migration_file_name}} | Generate a migration file by diffing against the declared schema. |
 | Recreate Database | npx supabase db reset | Resets the local database to current migrations. |
+| Apply Migration | npx supabase migration up | Applies all missing migrations to the local db. |
 
 ## Local Dashboard
 
