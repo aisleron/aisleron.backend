@@ -22,10 +22,11 @@ Cloud synchronization and database management for the Aisleron Android applicati
 | Stop	    | npx supabase stop	            | Shuts down containers but preserves local data. |
 | Reset	    | npx supabase stop --no-backup	| Shuts down containers and wipes all local data. |
 | Status	| npx supabase status	        | Displays local API keys, DB credentials, and URLs. |
-| Generate Migration | npx supabase db diff -f {{migration_file_name}} | Generate a migration file by diffing against the declared schema. |
-| Recreate Database | npx supabase db reset | Resets the local database to current migrations. |
-| Apply Migration | npx supabase migration up | Applies all missing migrations to the local db. |
-| Apply Cloud Migration | npx supabase db push | Applies all missing migrations to the linked cloud db project |
+| New Migration | npm run migration:new {{migration_file_name}} | Generate a new, empty migration file. |
+| Apply Migration | npm run migration:up    | Applies all missing migrations to the local db. |
+| Recreate Database | npm run db:reset      | Resets the local database to current migrations. |
+| Generate Migration | npm run db:diff {{migration_file_name}} | Generate a migration file by diffing against the declared schema. |
+| Apply Cloud Migration | npm run db:push   | Applies all missing migrations to the linked cloud db project |
 
 ## Local Dashboard
 

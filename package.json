@@ -1,0 +1,11 @@
+{
+  "name": "aisleron-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "migration:new": "npx supabase migration new",
+    "migration:up": "npx supabase migration up",
+    "db:reset": "npx supabase db reset",
+    "db:push": "npx supabase db push",
+    "db:diff": "npx supabase db diff -f"
+  }
+}
