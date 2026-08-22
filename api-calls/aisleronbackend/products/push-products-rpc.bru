@@ -1,0 +1,34 @@
+meta {
+  name: push-products-rpc
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{rpcUrl}}/push_products
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "p_records": [
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "name": "Test Product With null Note",
+        "in_stock": true,
+        "qty_needed": 10.0,
+        "qty_increment": 2.0,
+        "unit_of_measure": "kg",
+        "tracking_mode": "QUANTITY",
+        "is_deleted": false,
+        "client_updated_at": "2026-08-09T05:30:00Z"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

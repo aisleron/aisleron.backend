@@ -13,6 +13,7 @@ auth:bearer {
 vars:pre-request {
   restUrl: {{baseUrl}}/rest/v1
   authUrl: {{baseUrl}}/auth/v1/token
+  rpcUrl: {{restUrl}}/rpc
 }
 
 script:pre-request {

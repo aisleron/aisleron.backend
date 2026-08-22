@@ -1,0 +1,34 @@
+meta {
+  name: push-locations-rpc
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{rpcUrl}}/push_locations
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "p_records": [
+      {
+        "id": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+        "name": "Test Product With null Note",
+        "pinned": true,
+        "rank": 1,
+        "type": "SHOP",
+        "is_deleted": false,
+        "client_updated_at": "2026-08-09T05:30:00Z",
+        "note_id": null,
+        "default_filter": "NEEDED"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
