@@ -18,31 +18,39 @@ returns jsonb
 language plpgsql
 security invoker
 as $$
-declare
-    v_record jsonb;
 begin
-    for v_record in select * from jsonb_array_elements(p_records) loop
-        insert into public.notes (
-            id,
-            user_id,
-            client_updated_at,
-            is_deleted,
-            note_text
-        ) values (
-            (v_record->>'id')::uuid,
-            auth.uid(),
-            coalesce((v_record->>'client_updated_at')::timestamptz, now()),
-            coalesce((v_record->>'is_deleted')::boolean, false),
-            coalesce(v_record->>'note_text', '')
-        )
-        on conflict (id) do update set
-            client_updated_at = excluded.client_updated_at,
-            server_updated_at = now(),
-            is_deleted = excluded.is_deleted,
-            note_text = excluded.note_text
-        where public.notes.user_id = auth.uid()
-          and public.notes.client_updated_at < excluded.client_updated_at;
-    end loop;
+    insert into public.notes (
+        id,
+        user_id,
+        client_updated_at,
+        is_deleted,
+        note_text,
+        created_at
+    ) select
+        coalesce(
+            nullif(record.payload->>'id', '')::uuid, 
+            existing.id, 
+            gen_random_uuid()
+        ) as id,
+        auth.uid() as user_id,
+        coalesce((record.payload->>'client_updated_at')::timestamptz, now()) as client_updated_at,
+        coalesce((record.payload->>'is_deleted')::boolean, false) as is_deleted,
+        coalesce(record.payload->>'note_text', '') as note_text,
+        (record.payload->>'created_at')::timestamptz as created_at
+    from jsonb_array_elements(p_records) as record(payload)
+    left join public.notes as existing 
+        on existing.user_id = auth.uid()
+        and existing.is_deleted = false
+        and existing.note_text = record.payload->>'note_text'
+        and existing.created_at = (record.payload->>'created_at')::timestamptz
+        
+    on conflict (id) do update set
+        client_updated_at = excluded.client_updated_at,
+        server_updated_at = now(),
+        is_deleted = excluded.is_deleted,
+        note_text = excluded.note_text
+    where public.notes.user_id = auth.uid()
+      and public.notes.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end;

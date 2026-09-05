@@ -21,37 +21,44 @@ returns jsonb
 language plpgsql
 security invoker
 as $$
-declare
-    v_record jsonb;
 begin
-    for v_record in select * from jsonb_array_elements(p_records) loop
-        insert into public.{{table_name}} (
-            id,
-            user_id,
-            client_updated_at,
-            is_deleted,
-            -- Add remaining entity columns here, e,g,:
-            name,  
+    
+    insert into public.{{table_name}} (
+        id,
+        user_id,
+        client_updated_at,
+        is_deleted,
+        -- Add remaining entity columns here, e,g,:
+        -- name,  
 
-        ) values (
-            (v_record->>'id')::uuid,
-            auth.uid(),
-            coalesce((v_record->>'client_updated_at')::timestamptz, now()),
-            coalesce((v_record->>'is_deleted')::boolean, false),
-            -- Add remaining entity columns here, e,g,:
-            coalesce(v_record->>'name', ''),
-            
-        )
-        on conflict (id) do update set
-            client_updated_at = excluded.client_updated_at,
-            server_updated_at = now(),
-            is_deleted = excluded.is_deleted,
-            -- Add remaining entity columns here, e,g,:
-            name = excluded.name,
-            
-        where public.{{table_name}}.user_id = auth.uid()
-          and public.{{table_name}}.client_updated_at < excluded.client_updated_at;
-    end loop;
+    ) select 
+        coalesce(
+            nullif(record.payload->>'id', '')::uuid, 
+            existing.id, 
+            gen_random_uuid()
+        ) as id,
+        auth.uid() as user_id,
+        coalesce((record.payload->>'client_updated_at')::timestamptz, now()) as client_updated_at,
+        coalesce((record.payload->>'is_deleted')::boolean, false) as is_deleted,
+        -- Add remaining entity columns here, e,g,:
+        -- coalesce(record.payload->>'name', ''),
+
+    from jsonb_array_elements(p_records) as record(payload)
+    left join public.{{table_name}} as existing 
+        on existing.user_id = auth.uid()
+        and existing.is_deleted = false
+        -- Add conditions for natural key lookup, e.g.:
+        -- and existing.name = record.payload->>'name'
+    
+    on conflict (id) do update set
+        client_updated_at = excluded.client_updated_at,
+        server_updated_at = now(),
+        is_deleted = excluded.is_deleted,
+        -- Add remaining entity columns here, e,g,:
+        -- name = excluded.name,
+        
+    where public.{{table_name}}.user_id = auth.uid()
+      and public.{{table_name}}.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end;

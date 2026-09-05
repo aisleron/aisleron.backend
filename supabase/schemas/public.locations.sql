@@ -49,6 +49,10 @@ create policy "Users can manage their own locations"
     (select auth.uid()) = locations.user_id
   );
 
+create unique index locations_active_natural_key_idx 
+ON public.locations (user_id, name, type) 
+WHERE is_deleted = false;
+
 grant select, insert, update, delete on table public.locations to authenticated;
 grant all on table public.locations to service_role;
 revoke all on table public.locations from anon;

@@ -44,6 +44,10 @@ create policy "Users can manage their own loyalty_cards"
     (select auth.uid()) = loyalty_cards.user_id
   );
 
+create unique index loyalty_cards_active_natural_key_idx 
+ON public.loyalty_cards (user_id, provider, intent) 
+WHERE is_deleted = false;
+
 grant select, insert, update, delete on table public.loyalty_cards to authenticated;
 grant all on table public.loyalty_cards to service_role;
 revoke all on table public.loyalty_cards from anon;

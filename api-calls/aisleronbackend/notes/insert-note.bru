@@ -1,0 +1,23 @@
+meta {
+  name: insert-note
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{entityUrl}}
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "note_text": "New Note for {{email}}",
+    "created_at": "2026-09-05T01:01:01Z"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

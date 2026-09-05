@@ -18,49 +18,54 @@ returns jsonb
 language plpgsql
 security invoker
 as $$
-declare
-    v_record jsonb;
 begin
-    for v_record in select * from jsonb_array_elements(p_records) loop
-        insert into public.products (
-            id,
-            user_id,
-            client_updated_at,
-            is_deleted,
-            name,
-            in_stock,
-            qty_needed,
-            note_id,
-            qty_increment,
-            unit_of_measure,
-            tracking_mode
-        ) values (
-            (v_record->>'id')::uuid,
-            auth.uid(),
-            coalesce((v_record->>'client_updated_at')::timestamptz, now()),
-            coalesce((v_record->>'is_deleted')::boolean, false),
-            coalesce(v_record->>'name', ''),
-            coalesce((v_record->>'in_stock')::boolean, false),
-            coalesce((v_record->>'qty_needed')::double precision, 0.0),
-            coalesce((v_record->>'note_id')::uuid, null),
-            coalesce((v_record->>'qty_increment')::double precision, 1.0),
-            coalesce(v_record->>'unit_of_measure', ''),
-            v_record->>'tracking_mode'
-        )
-        on conflict (id) do update set
-            client_updated_at = excluded.client_updated_at,
-            server_updated_at = now(),
-            is_deleted = excluded.is_deleted,
-            name = excluded.name,
-            in_stock = excluded.in_stock,
-            qty_needed = excluded.qty_needed,
-            note_id = excluded.note_id,
-            qty_increment = excluded.qty_increment,
-            unit_of_measure = excluded.unit_of_measure,
-            tracking_mode = excluded.tracking_mode
-        where public.products.user_id = auth.uid()
-          and public.products.client_updated_at < excluded.client_updated_at;
-    end loop;
+    insert into public.products (
+        id,
+        user_id,
+        client_updated_at,
+        is_deleted,
+        name,
+        in_stock,
+        qty_needed,
+        note_id,
+        qty_increment,
+        unit_of_measure,
+        tracking_mode
+    ) select
+        coalesce(
+            nullif(record.payload->>'id', '')::uuid, 
+            existing.id, 
+            gen_random_uuid()
+        ) as id,
+        auth.uid() as user_id,
+        coalesce((record.payload->>'client_updated_at')::timestamptz, now()) as client_updated_at,
+        coalesce((record.payload->>'is_deleted')::boolean, false) as is_deleted,
+        coalesce(record.payload->>'name', '') as name,
+        coalesce((record.payload->>'in_stock')::boolean, false) as in_stock,
+        coalesce((record.payload->>'qty_needed')::double precision, 0.0) as qty_needed,
+        coalesce((record.payload->>'note_id')::uuid, null) as note_id,
+        coalesce((record.payload->>'qty_increment')::double precision, 1.0) as qty_increment,
+        coalesce(record.payload->>'unit_of_measure', '') as unit_of_measure,
+        record.payload->>'tracking_mode' as tracking_mode
+    from jsonb_array_elements(p_records) as record(payload)
+    left join public.products as existing 
+        on existing.user_id = auth.uid()
+        and existing.is_deleted = false
+        and existing.name = record.payload->>'name'
+    
+    on conflict (id) do update set
+        client_updated_at = excluded.client_updated_at,
+        server_updated_at = now(),
+        is_deleted = excluded.is_deleted,
+        name = excluded.name,
+        in_stock = excluded.in_stock,
+        qty_needed = excluded.qty_needed,
+        note_id = excluded.note_id,
+        qty_increment = excluded.qty_increment,
+        unit_of_measure = excluded.unit_of_measure,
+        tracking_mode = excluded.tracking_mode
+    where public.products.user_id = auth.uid()
+      and public.products.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end;

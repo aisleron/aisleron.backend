@@ -18,36 +18,43 @@ returns jsonb
 language plpgsql 
 security invoker 
 as $$
-declare 
-    v_record jsonb; 
 begin 
-    for v_record in select * from jsonb_array_elements(p_records) loop 
-        insert into public.loyalty_cards ( 
-            id, 
-            user_id, 
-            client_updated_at, 
-            is_deleted, 
-            name,
-            provider,
-            intent
-        ) values ( 
-            (v_record->>'id')::uuid, 
-            auth.uid(), 
-            coalesce((v_record->>'client_updated_at')::timestamptz, now()), 
-            coalesce((v_record->>'is_deleted')::boolean, false), 
-            v_record->>'name',
-            v_record->>'provider',
-            v_record->>'intent'
-        ) on conflict (id) do update set 
-            client_updated_at = excluded.client_updated_at, 
-            server_updated_at = now(), 
-            is_deleted = excluded.is_deleted, 
-            name = excluded.name,
-            provider = excluded.provider,
-            intent = excluded.intent
-        where public.loyalty_cards.user_id = auth.uid() 
-          and public.loyalty_cards.client_updated_at < excluded.client_updated_at;
-    end loop; 
+    insert into public.loyalty_cards ( 
+        id, 
+        user_id, 
+        client_updated_at, 
+        is_deleted, 
+        name,
+        provider,
+        intent
+    ) select
+        coalesce(
+            nullif(record.payload->>'id', '')::uuid, 
+            existing.id, 
+            gen_random_uuid()
+        ) as id,
+        auth.uid() as user_id,
+        coalesce((record.payload->>'client_updated_at')::timestamptz, now()) as client_updated_at,
+        coalesce((record.payload->>'is_deleted')::boolean, false) as is_deleted,
+        v_record->>'name' as name,
+        v_record->>'provider' as provider,
+        v_record->>'intent' as intent
+    from jsonb_array_elements(p_records) as record(payload)
+    left join public.loyalty_cards as existing 
+        on existing.user_id = auth.uid()
+        and existing.is_deleted = false
+        and existing.provider = record.payload->>'provider'
+        and existing.intent = record.payload->>'intent'
+    
+    on conflict (id) do update set 
+        client_updated_at = excluded.client_updated_at, 
+        server_updated_at = now(), 
+        is_deleted = excluded.is_deleted, 
+        name = excluded.name,
+        provider = excluded.provider,
+        intent = excluded.intent
+    where public.loyalty_cards.user_id = auth.uid() 
+      and public.loyalty_cards.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 

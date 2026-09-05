@@ -43,6 +43,10 @@ create policy "Users can manage their own product_variants"
     (select auth.uid()) = product_variants.user_id
   );
 
+create unique index product_variants_active_natural_key_idx 
+ON public.product_variants (user_id, barcode) 
+WHERE is_deleted = false;
+
 grant select, insert, update, delete on table public.product_variants to authenticated;
 grant all on table public.product_variants to service_role;
 revoke all on table public.product_variants from anon;

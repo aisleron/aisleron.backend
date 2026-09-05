@@ -21,6 +21,7 @@ create table public.aisle_products (
   is_deleted boolean not null default false,
   aisle_id uuid not null references public.aisles,
   product_id uuid not null references public.products,
+  location_id uuid not null references public.locations,
   rank integer not null
 );
 
@@ -43,6 +44,10 @@ create policy "Users can manage their own aisle_products"
   with check (
     (select auth.uid()) = aisle_products.user_id 
   );
+
+create unique index aisle_products_active_natural_key_idx 
+ON public.aisle_products (user_id, location_id, product_id) 
+WHERE is_deleted = false;
 
 grant select, insert, update, delete on table public.aisle_products to authenticated;
 grant all on table public.aisle_products to service_role;

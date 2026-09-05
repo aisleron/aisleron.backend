@@ -65,7 +65,12 @@ create policy "Users can manage their own {{table_name}}"
     (select auth.uid()) = {{table_name}}.user_id 
   );
 
--- 9. Grants
+-- 9. Natural key index
+create unique index {{table_name}}_active_natural_key_idx 
+ON {{schema}}.{{table_name}} (user_id, {{additional_natural_key_columns}} ) 
+WHERE is_deleted = false;
+
+-- 10. Grants
 grant select, insert, update, delete on table {{schema}}.{{table_name}} to authenticated;
 grant all on table {{schema}}.{{table_name}} to service_role;
 revoke all on table {{schema}}.{{table_name}} from anon;

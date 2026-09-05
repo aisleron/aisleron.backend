@@ -19,7 +19,8 @@ create table public.notes (
   client_updated_at timestamptz not null default now(),
   server_updated_at timestamptz not null default now(),
   is_deleted boolean not null default false,
-  note_text text not null
+  note_text text not null,
+  created_at timestamptz not null default now()
 );
 
 comment on table public.notes is 'Generic text entries linked to products or locations for additional user context.';
@@ -41,6 +42,10 @@ create policy "Users can manage their own notes"
   with check (
     (select auth.uid()) = notes.user_id
   );
+
+create unique index notes_active_natural_key_idx 
+ON public.notes (user_id, note_text, created_at) 
+WHERE is_deleted = false;
 
 grant select, insert, update, delete on table public.notes to authenticated;
 grant all on table public.notes to service_role;

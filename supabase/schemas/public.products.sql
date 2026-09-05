@@ -48,6 +48,10 @@ create policy "Users can manage their own products"
     (select auth.uid()) = products.user_id
   );
 
+create unique index products_active_natural_key_idx 
+ON public.products (user_id, name) 
+WHERE is_deleted = false;
+
 grant select, insert, update, delete on table public.products to authenticated;
 grant all on table public.products to service_role;
 revoke all on table public.products from anon;

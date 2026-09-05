@@ -18,36 +18,46 @@ returns jsonb
 language plpgsql 
 security invoker 
 as $$
-declare 
-    v_record jsonb; 
 begin 
-    for v_record in select * from jsonb_array_elements(p_records) loop 
-        insert into public.aisle_products ( 
-            id, 
-            user_id, 
-            client_updated_at, 
-            is_deleted, 
-            aisle_id,
-            product_id,
-            rank
-        ) values ( 
-            (v_record->>'id')::uuid, 
-            auth.uid(), 
-            coalesce((v_record->>'client_updated_at')::timestamptz, now()), 
-            coalesce((v_record->>'is_deleted')::boolean, false), 
-            (v_record->>'aisle_id')::uuid,
-            (v_record->>'product_id')::uuid,
-            coalesce((v_record->>'rank')::integer, 0)
-        ) on conflict (id) do update set 
-            client_updated_at = excluded.client_updated_at, 
-            server_updated_at = now(), 
-            is_deleted = excluded.is_deleted, 
-            aisle_id = excluded.aisle_id,
-            product_id = excluded.product_id,
-            rank = excluded.rank
-        where public.aisle_products.user_id = auth.uid() 
-          and public.aisle_products.client_updated_at < excluded.client_updated_at;
-    end loop; 
+    insert into public.aisle_products ( 
+        id, 
+        user_id, 
+        client_updated_at, 
+        is_deleted, 
+        aisle_id,
+        product_id,
+        location_id,
+        rank
+    ) select
+        coalesce(
+            nullif(record.payload->>'id', '')::uuid, 
+            existing.id, 
+            gen_random_uuid()
+        ) as id,
+        auth.uid() as user_id,
+        coalesce((record.payload->>'client_updated_at')::timestamptz, now()) as client_updated_at,
+        coalesce((record.payload->>'is_deleted')::boolean, false) as is_deleted,
+        (record.payload->>'aisle_id')::uuid as aisle_id,
+        (record.payload->>'product_id')::uuid as product_id,
+        (record.payload->>'location_id')::uuid as location_id,
+        coalesce((record.payload->>'rank')::integer, 0) as rank
+    from jsonb_array_elements(p_records) as record(payload)
+    left join public.notes as existing 
+        on existing.user_id = auth.uid()
+        and existing.is_deleted = false
+        and existing.location_id = (record.payload->>'location_id')::uuid
+        and existing.product_id = (record.payload->>'product_id')::uuid
+        
+    on conflict (id) do update set 
+        client_updated_at = excluded.client_updated_at, 
+        server_updated_at = now(), 
+        is_deleted = excluded.is_deleted, 
+        aisle_id = excluded.aisle_id,
+        product_id = excluded.product_id,
+        location_id = excluded.location_id,
+        rank = excluded.rank
+    where public.aisle_products.user_id = auth.uid() 
+        and public.aisle_products.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 

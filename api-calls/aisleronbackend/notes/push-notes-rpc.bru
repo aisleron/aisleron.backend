@@ -1,0 +1,27 @@
+meta {
+  name: push-notes-rpc
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{rpcUrl}}/push_notes
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "p_records": [
+      {
+        "note_text": "New Note for {{email}}",
+        "created_at": "2026-09-05T01:01:01Z"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

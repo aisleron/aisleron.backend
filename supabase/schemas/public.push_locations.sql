@@ -18,45 +18,52 @@ returns jsonb
 language plpgsql 
 security invoker 
 as $$
-declare 
-    v_record jsonb; 
 begin 
-    for v_record in select * from jsonb_array_elements(p_records) loop 
-        insert into public.locations ( 
-            id, 
-            user_id, 
-            client_updated_at, 
-            is_deleted, 
-            type,
-            default_filter,
-            name,
-            pinned,
-            note_id,
-            rank
-        ) values ( 
-            (v_record->>'id')::uuid, 
-            auth.uid(), 
-            coalesce((v_record->>'client_updated_at')::timestamptz, now()), 
-            coalesce((v_record->>'is_deleted')::boolean, false), 
-            v_record->>'type',
-            v_record->>'default_filter',
-            v_record->>'name',
-            coalesce((v_record->>'pinned')::boolean, false),
-            (v_record->>'note_id')::uuid,
-            coalesce((v_record->>'rank')::integer, 0)
-        ) on conflict (id) do update set 
-            client_updated_at = excluded.client_updated_at, 
-            server_updated_at = now(), 
-            is_deleted = excluded.is_deleted, 
-            type = excluded.type,
-            default_filter = excluded.default_filter,
-            name = excluded.name,
-            pinned = excluded.pinned,
-            note_id = excluded.note_id,
-            rank = excluded.rank
-        where public.locations.user_id = auth.uid() 
-          and public.locations.client_updated_at < excluded.client_updated_at;
-    end loop; 
+    insert into public.locations ( 
+        id, 
+        user_id, 
+        client_updated_at, 
+        is_deleted, 
+        type,
+        default_filter,
+        name,
+        pinned,
+        note_id,
+        rank
+    ) select 
+        coalesce(
+            nullif(record.payload->>'id', '')::uuid, 
+            existing.id, 
+            gen_random_uuid()
+        ) as id, 
+        auth.uid() as user_id, 
+        coalesce((record.payload->>'client_updated_at')::timestamptz, now()) as client_updated_at, 
+        coalesce((record.payload->>'is_deleted')::boolean, false) as is_deleted, 
+        record.payload->>'type' as type,
+        record.payload->>'default_filter' as default_filter,
+        record.payload->>'name' as name,
+        coalesce((record.payload->>'pinned')::boolean, false) as pinned,
+        (record.payload->>'note_id')::uuid as note_id,
+        coalesce((record.payload->>'rank')::integer, 0) as rank
+    from jsonb_array_elements(p_records) as record(payload)
+    left join public.locations as existing 
+        on existing.user_id = auth.uid()
+        and existing.is_deleted = false
+        and existing.name = record.payload->>'name'
+        and existing.type = record.payload->>'type'
+    
+    on conflict (id) do update set 
+        client_updated_at = excluded.client_updated_at, 
+        server_updated_at = now(), 
+        is_deleted = excluded.is_deleted, 
+        type = excluded.type,
+        default_filter = excluded.default_filter,
+        name = excluded.name,
+        pinned = excluded.pinned,
+        note_id = excluded.note_id,
+        rank = excluded.rank
+    where public.locations.user_id = auth.uid() 
+      and public.locations.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 

@@ -46,6 +46,10 @@ create policy "Users can manage their own aisles"
     (select auth.uid()) = aisles.user_id
   );
 
+create unique index aisles_active_natural_key_idx 
+ON public.aisles (user_id, name, location_id) 
+WHERE is_deleted = false;
+
 grant select, insert, update, delete on table public.aisles to authenticated;
 grant all on table public.aisles to service_role;
 revoke all on table public.aisles from anon;

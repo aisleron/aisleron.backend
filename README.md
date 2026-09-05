@@ -18,16 +18,17 @@ Cloud synchronization and database management for the Aisleron Android applicati
 
 |Action|Command|Description|
 |---|---|---|
-| Start	    | npx supabase start            | Spins up Postgres, Auth, and the local Dashboard. |
-| Stop	    | npx supabase stop	            | Shuts down containers but preserves local data. |
-| Reset	    | npx supabase stop --no-backup	| Shuts down containers and wipes all local data. |
-| Status	| npx supabase status	        | Displays local API keys, DB credentials, and URLs. |
+| Start	        | npx supabase start                            | Spins up Postgres, Auth, and the local Dashboard. |
+| Stop	        | npx supabase stop	                            | Shuts down containers but preserves local data. |
+| Reset	        | npx supabase stop --no-backup	                | Shuts down containers and wipes all local data. |
+| Status	    | npx supabase status	                        | Displays local API keys, DB credentials, and URLs. |
 | New Migration | npm run migration:new {{migration_file_name}} | Generate a new, empty migration file. |
-| Apply Migration | npm run migration:up    | Applies all missing migrations to the local db. |
-| Recreate Database | npm run db:reset      | Resets the local database to current migrations. |
-| Generate Migration | npm run db:diff {{migration_file_name}} | Generate a migration file by diffing against the declared schema. |
+| Apply Migration | npm run migration:up                        | Applies all missing migrations to the local db. |
+| Recreate Database | npm run db:reset                          | Resets the local database to current migrations. |
+| Generate Migration | npm run db:diff {{migration_file_name}}  | Generate a migration file by diffing against the declared schema. |
 | Generate Migration (CLI Version) | npx supabase@2.114.0 db diff -f {{migration_file_name}} | Generate a migration file by diffing against the declared schema, using a specific version of Supabase CLI. |
-| Apply Cloud Migration | npm run db:push   | Applies all missing migrations to the linked cloud db project |
+| Apply Cloud Migration | npm run db:push                       | Applies all missing migrations to the linked cloud db project |
+| Revert Migration | npx supabase migration repair --local --status reverted {{migration date}} | Undo the application of a migration to the target database |
 
 ## Local Dashboard
 
