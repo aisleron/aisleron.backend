@@ -57,11 +57,11 @@ enabled = true
 # Supports glob patterns relative to supabase directory: "./schemas/*.sql"
 schema_paths = [
   "schemas/db_config.sql",
-  "schemas/public.notes.sql",
-  "schemas/public.locations.sql",
-  "schemas/public.aisles.sql",
-  "schemas/public.products.sql",
-  "schemas/public.loyalty_cards.sql",
+  "schemas/app_data.notes.sql",
+  "schemas/app_data.locations.sql",
+  "schemas/app_data.aisles.sql",
+  "schemas/app_data.products.sql",
+  "schemas/app_data.loyalty_cards.sql",
   "schemas/*.sql" 
 ]
 

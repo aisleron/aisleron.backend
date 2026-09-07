@@ -13,40 +13,46 @@
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-create table public.notes (
+create table app_data.locations (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   client_updated_at timestamptz not null default now(),
   server_updated_at timestamptz not null default now(),
   is_deleted boolean not null default false,
-  note_text text not null,
-  created_at timestamptz not null default now()
+  type text not null,
+  default_filter text not null,
+  name text not null,
+  pinned boolean not null,
+  -- show_default_aisle boolean not null default true,
+  note_id uuid references app_data.notes on delete set null,
+  -- expanded boolean not null default true,
+  rank integer not null
 );
 
-comment on table public.notes is 'Generic text entries linked to products or locations for additional user context.';
+comment on table app_data.locations is 'Physical or digital shopping venues (e.g., "Main Street Supermarket" or "Weekly Meal Plan").';
 
 create trigger set_server_updated_at
-  before update on public.notes
+  before update on app_data.locations
   for each row
   execute function moddatetime (server_updated_at);
 
-alter table public.notes enable row level security;
+alter table app_data.locations enable row level security;
 
-create policy "Users can manage their own notes"
-  on public.notes
-  for all 
+create policy "Users can manage their own locations"
+  on app_data.locations
+  for all
   to authenticated
   using (
-    (select auth.uid()) = notes.user_id 
+    (select auth.uid()) = locations.user_id
   )
   with check (
-    (select auth.uid()) = notes.user_id
+    (select auth.uid()) = locations.user_id
   );
 
-create unique index notes_active_natural_key_idx 
-ON public.notes (user_id, note_text, created_at) 
+create unique index locations_active_natural_key_idx 
+ON app_data.locations (user_id, name, type) 
 WHERE is_deleted = false;
 
-grant select, insert, update, delete on table public.notes to authenticated;
-grant all on table public.notes to service_role;
-revoke all on table public.notes from anon;
+grant select, insert, update, delete on table app_data.locations to authenticated;
+grant all on table app_data.locations to service_role;
+revoke all on table app_data.locations from anon;

@@ -20,7 +20,7 @@ security invoker
 set search_path = ''
 as $$
 begin 
-    insert into public.product_variants ( 
+    insert into app_data.product_variants ( 
         id, 
         user_id, 
         client_updated_at, 
@@ -41,7 +41,7 @@ begin
         record.payload->>'barcode' as barcode,
         coalesce((record.payload->>'created_at')::timestamptz, now()) as created_at
     from jsonb_array_elements(p_records) as record(payload)
-    left join public.product_variants as existing 
+    left join app_data.product_variants as existing 
         on existing.user_id = auth.uid()
         and existing.is_deleted = false
         and existing.barcode = record.payload->>'barcode'
@@ -53,8 +53,8 @@ begin
         product_id = excluded.product_id,
         barcode = excluded.barcode,
         created_at = excluded.created_at
-    where public.product_variants.user_id = auth.uid() 
-      and public.product_variants.client_updated_at < excluded.client_updated_at;
+    where app_data.product_variants.user_id = auth.uid() 
+      and app_data.product_variants.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 

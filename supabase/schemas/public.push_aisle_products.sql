@@ -20,7 +20,7 @@ security invoker
 set search_path = ''
 as $$
 begin 
-    insert into public.aisle_products ( 
+    insert into app_data.aisle_products ( 
         id, 
         user_id, 
         client_updated_at, 
@@ -43,12 +43,12 @@ begin
     from jsonb_array_elements(p_records) as record(payload)
     left join lateral (
         select ap.id 
-        from public.aisle_products ap
+        from app_data.aisle_products ap
         where ap.user_id = auth.uid()
           and ap.is_deleted = false
           and ap.product_id = (record.payload->>'product_id')::uuid
           and exists (
-              select null from public.aisles a 
+              select null from app_data.aisles a 
               where a.id = ap.aisle_id 
                 and a.location_id = (record.payload->>'location_id')::uuid 
           )
@@ -63,8 +63,8 @@ begin
         aisle_id = excluded.aisle_id,
         product_id = excluded.product_id,
         rank = excluded.rank
-    where public.aisle_products.user_id = auth.uid() 
-      and public.aisle_products.client_updated_at < excluded.client_updated_at;
+    where app_data.aisle_products.user_id = auth.uid() 
+      and app_data.aisle_products.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 

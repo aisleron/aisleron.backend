@@ -44,7 +44,7 @@ as $$
         pt.qty_increment,
         pt.unit_of_measure,
         pt.tracking_mode
-    from public.products pt
+    from app_data.products pt
     where pt.user_id = auth.uid()
       and pt.server_updated_at > p_since_timestamp;
 $$;

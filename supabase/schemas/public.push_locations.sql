@@ -20,7 +20,7 @@ security invoker
 set search_path = ''
 as $$
 begin 
-    insert into public.locations ( 
+    insert into app_data.locations ( 
         id, 
         user_id, 
         client_updated_at, 
@@ -47,7 +47,7 @@ begin
         (record.payload->>'note_id')::uuid as note_id,
         coalesce((record.payload->>'rank')::integer, 0) as rank
     from jsonb_array_elements(p_records) as record(payload)
-    left join public.locations as existing 
+    left join app_data.locations as existing 
         on existing.user_id = auth.uid()
         and existing.is_deleted = false
         and existing.name = record.payload->>'name'
@@ -63,8 +63,8 @@ begin
         pinned = excluded.pinned,
         note_id = excluded.note_id,
         rank = excluded.rank
-    where public.locations.user_id = auth.uid() 
-      and public.locations.client_updated_at < excluded.client_updated_at;
+    where app_data.locations.user_id = auth.uid() 
+      and app_data.locations.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 

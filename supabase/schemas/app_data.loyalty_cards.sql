@@ -13,45 +13,41 @@
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-create table public.products (
+create table app_data.loyalty_cards (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   client_updated_at timestamptz not null default now(),
   server_updated_at timestamptz not null default now(),
   is_deleted boolean not null default false,
   name text not null,
-  in_stock boolean not null,
-  qty_needed double precision not null default 0,
-  note_id uuid references public.notes on delete set null,
-  qty_increment double precision not null default 1,
-  unit_of_measure text not null default '',
-  tracking_mode text
+  provider text not null,
+  intent text not null
 );
 
-comment on table public.products is 'Individual items within the master product list, including stock status and tracking metadata.';
+comment on table app_data.loyalty_cards is 'Stores user-defined loyalty programs, card names, and provider details.';
 
 create trigger set_server_updated_at
-  before update on public.products
+  before update on app_data.loyalty_cards
   for each row
   execute function moddatetime (server_updated_at);
 
-alter table public.products enable row level security;
+alter table app_data.loyalty_cards enable row level security;
 
-create policy "Users can manage their own products"
-  on public.products
-  for all
+create policy "Users can manage their own loyalty_cards"
+  on app_data.loyalty_cards
+  for all 
   to authenticated
   using (
-    (select auth.uid()) = products.user_id 
+    (select auth.uid()) = loyalty_cards.user_id
   )
   with check (
-    (select auth.uid()) = products.user_id
+    (select auth.uid()) = loyalty_cards.user_id
   );
 
-create unique index products_active_natural_key_idx 
-ON public.products (user_id, name) 
+create unique index loyalty_cards_active_natural_key_idx 
+ON app_data.loyalty_cards (user_id, provider, intent) 
 WHERE is_deleted = false;
 
-grant select, insert, update, delete on table public.products to authenticated;
-grant all on table public.products to service_role;
-revoke all on table public.products from anon;
+grant select, insert, update, delete on table app_data.loyalty_cards to authenticated;
+grant all on table app_data.loyalty_cards to service_role;
+revoke all on table app_data.loyalty_cards from anon;

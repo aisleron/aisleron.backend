@@ -38,7 +38,7 @@ as $$
         pt.location_id,
         pt.rank,
         pt.is_default
-    from public.aisles pt
+    from app_data.aisles pt
     where pt.user_id = auth.uid()
       and pt.server_updated_at > p_since_timestamp;
 $$;

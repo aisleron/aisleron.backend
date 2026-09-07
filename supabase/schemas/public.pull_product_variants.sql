@@ -36,7 +36,7 @@ as $$
         pt.product_id,
         pt.barcode,
         pt.created_at 
-    from public.product_variants pt
+    from app_data.product_variants pt
     where pt.user_id = auth.uid()
       and pt.server_updated_at > p_since_timestamp;
 $$;

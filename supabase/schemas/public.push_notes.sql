@@ -20,7 +20,7 @@ security invoker
 set search_path = ''
 as $$
 begin
-    insert into public.notes (
+    insert into app_data.notes (
         id,
         user_id,
         client_updated_at,
@@ -39,7 +39,7 @@ begin
         coalesce(record.payload->>'note_text', '') as note_text,
         (record.payload->>'created_at')::timestamptz as created_at
     from jsonb_array_elements(p_records) as record(payload)
-    left join public.notes as existing 
+    left join app_data.notes as existing 
         on existing.user_id = auth.uid()
         and existing.is_deleted = false
         and existing.note_text = record.payload->>'note_text'
@@ -50,8 +50,8 @@ begin
         server_updated_at = now(),
         is_deleted = excluded.is_deleted,
         note_text = excluded.note_text
-    where public.notes.user_id = auth.uid()
-      and public.notes.client_updated_at < excluded.client_updated_at;
+    where app_data.notes.user_id = auth.uid()
+      and app_data.notes.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end;

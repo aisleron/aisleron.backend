@@ -16,7 +16,7 @@
 -- TEMPLATE: New Aisleron Sync Pull Function
 -- Replace {{table_name}} with your entity name, e.g. products
 
-create or replace function public.pull_{{table_name}}(p_since_timestamp timestamptz)
+create or replace function app_data.pull_{{table_name}}(p_since_timestamp timestamptz)
 returns table (
     id uuid,
     client_updated_at timestamptz,
@@ -39,7 +39,7 @@ as $$
         -- Add remaining entity columns here, e,g,:
         -- name, 
 
-    from public.{{table_name}} pt
+    from app_data.{{table_name}} pt
     where pt.user_id = auth.uid()
       and pt.server_updated_at > p_since_timestamp;
 $$;

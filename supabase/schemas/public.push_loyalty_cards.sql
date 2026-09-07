@@ -20,7 +20,7 @@ security invoker
 set search_path = ''
 as $$
 begin 
-    insert into public.loyalty_cards ( 
+    insert into app_data.loyalty_cards ( 
         id, 
         user_id, 
         client_updated_at, 
@@ -41,7 +41,7 @@ begin
         record.payload->>'provider' as provider,
         record.payload->>'intent' as intent
     from jsonb_array_elements(p_records) as record(payload)
-    left join public.loyalty_cards as existing 
+    left join app_data.loyalty_cards as existing 
         on existing.user_id = auth.uid()
         and existing.is_deleted = false
         and existing.provider = record.payload->>'provider'
@@ -54,8 +54,8 @@ begin
         name = excluded.name,
         provider = excluded.provider,
         intent = excluded.intent
-    where public.loyalty_cards.user_id = auth.uid() 
-      and public.loyalty_cards.client_updated_at < excluded.client_updated_at;
+    where app_data.loyalty_cards.user_id = auth.uid() 
+      and app_data.loyalty_cards.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 

@@ -13,41 +13,45 @@
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-create table public.aisle_products (
+create table app_data.products (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   client_updated_at timestamptz not null default now(),
   server_updated_at timestamptz not null default now(),
   is_deleted boolean not null default false,
-  aisle_id uuid not null references public.aisles,
-  product_id uuid not null references public.products,
-  rank integer not null
+  name text not null,
+  in_stock boolean not null,
+  qty_needed double precision not null default 0,
+  note_id uuid references app_data.notes on delete set null,
+  qty_increment double precision not null default 1,
+  unit_of_measure text not null default '',
+  tracking_mode text
 );
 
-comment on table public.aisle_products is 'Mapping table that defines the specific aisle and sort rank for a product within a location.';
+comment on table app_data.products is 'Individual items within the master product list, including stock status and tracking metadata.';
 
 create trigger set_server_updated_at
-  before update on public.aisle_products
+  before update on app_data.products
   for each row
   execute function moddatetime (server_updated_at);
 
-alter table public.aisle_products enable row level security;
+alter table app_data.products enable row level security;
 
-create policy "Users can manage their own aisle_products"
-  on public.aisle_products
-  for all 
+create policy "Users can manage their own products"
+  on app_data.products
+  for all
   to authenticated
   using (
-    (select auth.uid()) = aisle_products.user_id 
+    (select auth.uid()) = products.user_id 
   )
   with check (
-    (select auth.uid()) = aisle_products.user_id 
+    (select auth.uid()) = products.user_id
   );
 
-create unique index aisle_products_active_natural_key_idx 
-ON public.aisle_products (user_id, aisle_id, product_id) 
+create unique index products_active_natural_key_idx 
+ON app_data.products (user_id, name) 
 WHERE is_deleted = false;
 
-grant select, insert, update, delete on table public.aisle_products to authenticated;
-grant all on table public.aisle_products to service_role;
--- revoke all on table public.aisle_products from anon;
+grant select, insert, update, delete on table app_data.products to authenticated;
+grant all on table app_data.products to service_role;
+revoke all on table app_data.products from anon;

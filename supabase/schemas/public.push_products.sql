@@ -20,7 +20,7 @@ security invoker
 set search_path = ''
 as $$
 begin
-    insert into public.products (
+    insert into app_data.products (
         id,
         user_id,
         client_updated_at,
@@ -49,7 +49,7 @@ begin
         coalesce(record.payload->>'unit_of_measure', '') as unit_of_measure,
         record.payload->>'tracking_mode' as tracking_mode
     from jsonb_array_elements(p_records) as record(payload)
-    left join public.products as existing 
+    left join app_data.products as existing 
         on existing.user_id = auth.uid()
         and existing.is_deleted = false
         and existing.name = record.payload->>'name'
@@ -65,8 +65,8 @@ begin
         qty_increment = excluded.qty_increment,
         unit_of_measure = excluded.unit_of_measure,
         tracking_mode = excluded.tracking_mode
-    where public.products.user_id = auth.uid()
-      and public.products.client_updated_at < excluded.client_updated_at;
+    where app_data.products.user_id = auth.uid()
+      and app_data.products.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end;

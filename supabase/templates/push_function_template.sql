@@ -16,14 +16,14 @@
 -- TEMPLATE: New Aisleron Sync Push Function
 -- Replace {{table_name}} with your entity name, e.g. products
 
-create or replace function public.push_{{table_name}}(p_records jsonb)
+create or replace function app_data.push_{{table_name}}(p_records jsonb)
 returns jsonb
 language plpgsql
 security invoker
 set search_path = ''
 as $$
 begin
-    insert into public.{{table_name}} (
+    insert into app_data.{{table_name}} (
         id,
         user_id,
         client_updated_at,
@@ -44,7 +44,7 @@ begin
         -- coalesce(record.payload->>'name', ''),
 
     from jsonb_array_elements(p_records) as record(payload)
-    left join public.{{table_name}} as existing 
+    left join app_data.{{table_name}} as existing 
         on existing.user_id = auth.uid()
         and existing.is_deleted = false
         -- Add conditions for natural key lookup, e.g.:
@@ -57,8 +57,8 @@ begin
         -- Add remaining entity columns here, e,g,:
         -- name = excluded.name,
         
-    where public.{{table_name}}.user_id = auth.uid()
-      and public.{{table_name}}.client_updated_at < excluded.client_updated_at;
+    where app_data.{{table_name}}.user_id = auth.uid()
+      and app_data.{{table_name}}.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end;

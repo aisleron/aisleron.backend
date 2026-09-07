@@ -36,7 +36,7 @@ as $$
         pt.name,
         pt.provider,
         pt.intent
-    from public.loyalty_cards pt
+    from app_data.loyalty_cards pt
     where pt.user_id = auth.uid()
       and pt.server_updated_at > p_since_timestamp;
 $$;

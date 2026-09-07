@@ -42,7 +42,7 @@ as $$
         pt.pinned,
         pt.note_id,
         pt.rank
-    from public.locations pt
+    from app_data.locations pt
     where pt.user_id = auth.uid()
       and pt.server_updated_at > p_since_timestamp;
 $$;

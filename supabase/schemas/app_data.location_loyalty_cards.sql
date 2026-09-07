@@ -13,27 +13,27 @@
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-create table public.location_loyalty_cards (
+create table app_data.location_loyalty_cards (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   client_updated_at timestamptz not null default now(),
   server_updated_at timestamptz not null default now(),
   is_deleted boolean not null default false,
-  location_id uuid unique not null references public.locations (id) on delete cascade,
-  loyalty_card_id uuid not null references public.loyalty_cards on delete cascade
+  location_id uuid unique not null references app_data.locations (id) on delete cascade,
+  loyalty_card_id uuid not null references app_data.loyalty_cards on delete cascade
 );
 
-comment on table public.location_loyalty_cards is 'Maps a specific shopping location to a user loyalty card to ensure the correct card is shown at checkout.';
+comment on table app_data.location_loyalty_cards is 'Maps a specific shopping location to a user loyalty card to ensure the correct card is shown at checkout.';
 
 create trigger set_server_updated_at
-  before update on public.location_loyalty_cards
+  before update on app_data.location_loyalty_cards
   for each row
   execute function moddatetime (server_updated_at);
 
-alter table public.location_loyalty_cards enable row level security;
+alter table app_data.location_loyalty_cards enable row level security;
 
 create policy "Users can manage their own location_loyalty_cards"
-  on public.location_loyalty_cards
+  on app_data.location_loyalty_cards
   for all 
   to authenticated
   using (
@@ -44,9 +44,9 @@ create policy "Users can manage their own location_loyalty_cards"
   );
 
 create unique index location_loyalty_cards_active_natural_key_idx 
-ON public.location_loyalty_cards (user_id, location_id, loyalty_card_id) 
+ON app_data.location_loyalty_cards (user_id, location_id, loyalty_card_id) 
 WHERE is_deleted = false;
 
-grant select, insert, update, delete on table public.location_loyalty_cards to authenticated;
-grant all on table public.location_loyalty_cards to service_role;
-revoke all on table public.location_loyalty_cards from anon;
+grant select, insert, update, delete on table app_data.location_loyalty_cards to authenticated;
+grant all on table app_data.location_loyalty_cards to service_role;
+revoke all on table app_data.location_loyalty_cards from anon;

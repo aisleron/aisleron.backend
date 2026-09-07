@@ -34,7 +34,7 @@ as $$
         pt.is_deleted,
         pt.location_id,
         pt.loyalty_card_id
-    from public.location_loyalty_cards pt
+    from app_data.location_loyalty_cards pt
     where pt.user_id = auth.uid()
       and pt.server_updated_at > p_since_timestamp;
 $$;

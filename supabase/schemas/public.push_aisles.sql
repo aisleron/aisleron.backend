@@ -20,7 +20,7 @@ security invoker
 set search_path = ''
 as $$
 begin 
-    insert into public.aisles ( 
+    insert into app_data.aisles ( 
         id, 
         user_id, 
         client_updated_at, 
@@ -43,7 +43,7 @@ begin
         coalesce((record.payload->>'rank')::integer, 0) as rank,
         coalesce((record.payload->>'is_default')::boolean, false) as is_default
     from jsonb_array_elements(p_records) as record(payload)
-    left join public.aisles as existing 
+    left join app_data.aisles as existing 
         on existing.user_id = auth.uid()
         and existing.is_deleted = false
         and existing.name = record.payload->>'name'
@@ -57,8 +57,8 @@ begin
         location_id = excluded.location_id,
         rank = excluded.rank,
         is_default = excluded.is_default
-    where public.aisles.user_id = auth.uid() 
-      and public.aisles.client_updated_at < excluded.client_updated_at;
+    where app_data.aisles.user_id = auth.uid() 
+      and app_data.aisles.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 

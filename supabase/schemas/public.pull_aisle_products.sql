@@ -38,8 +38,8 @@ as $$
         pt.product_id,
         pt.aisle_id,
         pt.rank
-    from public.aisle_products pt
-    join public.aisles a on a.id = pt.aisle_id
+    from app_data.aisle_products pt
+    join app_data.aisles a on a.id = pt.aisle_id
     where pt.user_id = auth.uid()
       and pt.server_updated_at > p_since_timestamp;
 $$;

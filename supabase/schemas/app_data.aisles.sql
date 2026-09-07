@@ -13,30 +13,30 @@
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-create table public.aisles (
+create table app_data.aisles (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   client_updated_at timestamptz not null default now(),
   server_updated_at timestamptz not null default now(),
   is_deleted boolean not null default false,
   name text not null,
-  location_id uuid not null references public.locations,
+  location_id uuid not null references app_data.locations,
   rank integer not null,
   is_default boolean not null default false --,
   -- expanded boolean not null default true
 );
 
-comment on table public.aisles is 'Categorization zones within a shopping location, used to group products.';
+comment on table app_data.aisles is 'Categorization zones within a shopping location, used to group products.';
 
 create trigger set_server_updated_at
-  before update on public.aisles
+  before update on app_data.aisles
   for each row
   execute function moddatetime (server_updated_at);
 
-alter table public.aisles enable row level security;
+alter table app_data.aisles enable row level security;
 
 create policy "Users can manage their own aisles"
-  on public.aisles
+  on app_data.aisles
   for all
   to authenticated
   using (
@@ -47,9 +47,9 @@ create policy "Users can manage their own aisles"
   );
 
 create unique index aisles_active_natural_key_idx 
-ON public.aisles (user_id, name, location_id) 
+ON app_data.aisles (user_id, name, location_id) 
 WHERE is_deleted = false;
 
-grant select, insert, update, delete on table public.aisles to authenticated;
-grant all on table public.aisles to service_role;
-revoke all on table public.aisles from anon;
+grant select, insert, update, delete on table app_data.aisles to authenticated;
+grant all on table app_data.aisles to service_role;
+revoke all on table app_data.aisles from anon;

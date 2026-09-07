@@ -34,7 +34,7 @@ as $$
         pt.is_deleted,
         pt.note_text,
         pt.created_at 
-    from public.notes pt
+    from app_data.notes pt
     where pt.user_id = auth.uid()
       and pt.server_updated_at > p_since_timestamp;
 $$;

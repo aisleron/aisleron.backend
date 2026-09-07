@@ -13,46 +13,41 @@
 -- You should have received a copy of the GNU Affero General Public License
 -- along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-create table public.locations (
+create table app_data.aisle_products (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
   client_updated_at timestamptz not null default now(),
   server_updated_at timestamptz not null default now(),
   is_deleted boolean not null default false,
-  type text not null,
-  default_filter text not null,
-  name text not null,
-  pinned boolean not null,
-  -- show_default_aisle boolean not null default true,
-  note_id uuid references public.notes on delete set null,
-  -- expanded boolean not null default true,
+  aisle_id uuid not null references app_data.aisles,
+  product_id uuid not null references app_data.products,
   rank integer not null
 );
 
-comment on table public.locations is 'Physical or digital shopping venues (e.g., "Main Street Supermarket" or "Weekly Meal Plan").';
+comment on table app_data.aisle_products is 'Mapping table that defines the specific aisle and sort rank for a product within a location.';
 
 create trigger set_server_updated_at
-  before update on public.locations
+  before update on app_data.aisle_products
   for each row
   execute function moddatetime (server_updated_at);
 
-alter table public.locations enable row level security;
+alter table app_data.aisle_products enable row level security;
 
-create policy "Users can manage their own locations"
-  on public.locations
-  for all
+create policy "Users can manage their own aisle_products"
+  on app_data.aisle_products
+  for all 
   to authenticated
   using (
-    (select auth.uid()) = locations.user_id
+    (select auth.uid()) = aisle_products.user_id 
   )
   with check (
-    (select auth.uid()) = locations.user_id
+    (select auth.uid()) = aisle_products.user_id 
   );
 
-create unique index locations_active_natural_key_idx 
-ON public.locations (user_id, name, type) 
+create unique index aisle_products_active_natural_key_idx 
+ON app_data.aisle_products (user_id, aisle_id, product_id) 
 WHERE is_deleted = false;
 
-grant select, insert, update, delete on table public.locations to authenticated;
-grant all on table public.locations to service_role;
-revoke all on table public.locations from anon;
+grant select, insert, update, delete on table app_data.aisle_products to authenticated;
+grant all on table app_data.aisle_products to service_role;
+-- revoke all on table app_data.aisle_products from anon;
