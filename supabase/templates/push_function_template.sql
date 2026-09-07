@@ -20,9 +20,9 @@ create or replace function public.push_{{table_name}}(p_records jsonb)
 returns jsonb
 language plpgsql
 security invoker
+set search_path = ''
 as $$
 begin
-    
     insert into public.{{table_name}} (
         id,
         user_id,

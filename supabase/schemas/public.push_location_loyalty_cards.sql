@@ -17,6 +17,7 @@ create or replace function public.push_location_loyalty_cards(p_records jsonb)
 returns jsonb 
 language plpgsql 
 security invoker 
+set search_path = ''
 as $$
 begin 
     insert into public.location_loyalty_cards ( 
@@ -35,8 +36,8 @@ begin
         auth.uid() as user_id,
         coalesce((record.payload->>'client_updated_at')::timestamptz, now()) as client_updated_at,
         coalesce((record.payload->>'is_deleted')::boolean, false) as is_deleted,
-        (v_record->>'location_id')::uuid as location_id,
-        (v_record->>'loyalty_card_id')::uuid as loyalty_card_id
+        (record.payload->>'location_id')::uuid as location_id,
+        (record.payload->>'loyalty_card_id')::uuid as loyalty_card_id
     from jsonb_array_elements(p_records) as record(payload)
     left join public.location_loyalty_cards as existing 
         on existing.user_id = auth.uid()

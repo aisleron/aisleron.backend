@@ -17,6 +17,7 @@ create or replace function public.push_aisle_products(p_records jsonb)
 returns jsonb 
 language plpgsql 
 security invoker 
+set search_path = ''
 as $$
 begin 
     insert into public.aisle_products ( 
@@ -26,7 +27,6 @@ begin
         is_deleted, 
         aisle_id,
         product_id,
-        location_id,
         rank
     ) select
         coalesce(
@@ -39,14 +39,22 @@ begin
         coalesce((record.payload->>'is_deleted')::boolean, false) as is_deleted,
         (record.payload->>'aisle_id')::uuid as aisle_id,
         (record.payload->>'product_id')::uuid as product_id,
-        (record.payload->>'location_id')::uuid as location_id,
         coalesce((record.payload->>'rank')::integer, 0) as rank
     from jsonb_array_elements(p_records) as record(payload)
-    left join public.notes as existing 
-        on existing.user_id = auth.uid()
-        and existing.is_deleted = false
-        and existing.location_id = (record.payload->>'location_id')::uuid
-        and existing.product_id = (record.payload->>'product_id')::uuid
+    left join lateral (
+        select ap.id 
+        from public.aisle_products ap
+        where ap.user_id = auth.uid()
+          and ap.is_deleted = false
+          and ap.product_id = (record.payload->>'product_id')::uuid
+          and exists (
+              select null from public.aisles a 
+              where a.id = ap.aisle_id 
+                and a.location_id = (record.payload->>'location_id')::uuid 
+          )
+        order by ap.client_updated_at desc
+        limit 1
+    ) existing on true
         
     on conflict (id) do update set 
         client_updated_at = excluded.client_updated_at, 
@@ -54,10 +62,9 @@ begin
         is_deleted = excluded.is_deleted, 
         aisle_id = excluded.aisle_id,
         product_id = excluded.product_id,
-        location_id = excluded.location_id,
         rank = excluded.rank
     where public.aisle_products.user_id = auth.uid() 
-        and public.aisle_products.client_updated_at < excluded.client_updated_at;
+      and public.aisle_products.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 
