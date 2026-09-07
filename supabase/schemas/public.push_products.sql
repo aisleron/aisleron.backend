@@ -17,6 +17,7 @@ create or replace function public.push_products(p_records jsonb)
 returns jsonb
 language plpgsql
 security invoker
+set search_path = ''
 as $$
 begin
     insert into public.products (

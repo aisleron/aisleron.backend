@@ -20,7 +20,8 @@ create table public.product_variants (
   server_updated_at timestamptz not null default now(),
   is_deleted boolean not null default false,
   product_id uuid not null references public.products(id) on delete cascade,
-  barcode text not null
+  barcode text not null,
+  created_at timestamptz not null default now()
 );
 
 comment on table public.product_variants is 'Different variants of a product based on bar codes, etc.';

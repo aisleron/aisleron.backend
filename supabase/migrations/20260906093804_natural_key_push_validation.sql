@@ -1,8 +1,6 @@
-alter table "public"."aisle_products" add column "location_id" uuid not null;
-
 alter table "public"."notes" add column "created_at" timestamp with time zone not null default now();
 
-CREATE UNIQUE INDEX aisle_products_active_natural_key_idx ON public.aisle_products USING btree (user_id, location_id, product_id) WHERE (is_deleted = false);
+CREATE UNIQUE INDEX aisle_products_active_natural_key_idx ON public.aisle_products USING btree (user_id, aisle_id, product_id) WHERE (is_deleted = false);
 
 CREATE UNIQUE INDEX aisles_active_natural_key_idx ON public.aisles USING btree (user_id, name, location_id) WHERE (is_deleted = false);
 
@@ -18,10 +16,6 @@ CREATE UNIQUE INDEX product_variants_active_natural_key_idx ON public.product_va
 
 CREATE UNIQUE INDEX products_active_natural_key_idx ON public.products USING btree (user_id, name) WHERE (is_deleted = false);
 
-alter table "public"."aisle_products" add constraint "aisle_products_location_id_fkey" FOREIGN KEY (location_id) REFERENCES public.locations(id) not valid;
-
-alter table "public"."aisle_products" validate constraint "aisle_products_location_id_fkey";
-
 set check_function_bodies = off;
 
 CREATE OR REPLACE FUNCTION public.push_aisle_products(p_records jsonb)
@@ -36,7 +30,6 @@ begin
         is_deleted, 
         aisle_id,
         product_id,
-        location_id,
         rank
     ) select
         coalesce(
@@ -49,14 +42,22 @@ begin
         coalesce((record.payload->>'is_deleted')::boolean, false) as is_deleted,
         (record.payload->>'aisle_id')::uuid as aisle_id,
         (record.payload->>'product_id')::uuid as product_id,
-        (record.payload->>'location_id')::uuid as location_id,
         coalesce((record.payload->>'rank')::integer, 0) as rank
     from jsonb_array_elements(p_records) as record(payload)
-    left join public.notes as existing 
-        on existing.user_id = auth.uid()
-        and existing.is_deleted = false
-        and existing.location_id = (record.payload->>'location_id')::uuid
-        and existing.product_id = (record.payload->>'product_id')::uuid
+    left join lateral (
+        select ap.id 
+        from public.aisle_products ap
+        where ap.user_id = auth.uid()
+          and ap.is_deleted = false
+          and ap.product_id = (record.payload->>'product_id')::uuid
+          and exists (
+              select null from public.aisles a 
+              where a.id = ap.aisle_id 
+                and a.location_id = (record.payload->>'location_id')::uuid 
+          )
+        order by ap.client_updated_at desc
+        limit 1
+    ) existing on true
         
     on conflict (id) do update set 
         client_updated_at = excluded.client_updated_at, 
@@ -64,10 +65,9 @@ begin
         is_deleted = excluded.is_deleted, 
         aisle_id = excluded.aisle_id,
         product_id = excluded.product_id,
-        location_id = excluded.location_id,
         rank = excluded.rank
     where public.aisle_products.user_id = auth.uid() 
-        and public.aisle_products.client_updated_at < excluded.client_updated_at;
+      and public.aisle_products.client_updated_at < excluded.client_updated_at;
 
     return jsonb_build_object('success', true);
 end; 
