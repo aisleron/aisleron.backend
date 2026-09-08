@@ -559,8 +559,8 @@ begin
     left join app_data.location_loyalty_cards as existing 
         on existing.user_id = auth.uid()
         and existing.is_deleted = false
-        and existing.location_id = (v_record->>'location_id')::uuid
-        and existing.loyalty_card_id = (v_record->>'loyalty_card_id')::uuid    
+        and existing.location_id = (record.payload->>'location_id')::uuid
+        and existing.loyalty_card_id = (record.payload->>'loyalty_card_id')::uuid    
     
     on conflict (id) do update set 
         client_updated_at = excluded.client_updated_at, 
