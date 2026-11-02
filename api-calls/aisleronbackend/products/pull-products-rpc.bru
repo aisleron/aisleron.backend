@@ -1,0 +1,22 @@
+meta {
+  name: pull-products-rpc
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{rpcUrl}}/pull_products
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "p_since_timestamp":  "2026-01-09T05:30:00Z"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
